@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"The DiscordComponentEmbed authors"
+		]
+	},
+	"discordcomponentembed-desc": "Publishes a Discord component link preview, and Open Graph fallback tags, for wiki pages",
+	"discordcomponentembed-magic-discord_embed": "discord_embed"
+}

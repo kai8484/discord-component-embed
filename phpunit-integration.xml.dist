@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Integration suite: parses real wikitext against a real, installed wiki and a
+	database. Kept out of the default test command on purpose.
+
+	Written for the PHPUnit that ships with MediaWiki (9.6 on 1.46), which is the
+	runner that executes it.
+-->
+<phpunit bootstrap="tests/bootstrap-integration.php"
+	colors="true"
+	convertDeprecationsToExceptions="false"
+	beStrictAboutOutputDuringTests="true">
+	<testsuites>
+		<testsuite name="integration">
+			<directory>tests/phpunit/integration</directory>
+		</testsuite>
+	</testsuites>
+</phpunit>

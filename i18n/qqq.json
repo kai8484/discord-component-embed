@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"The DiscordComponentEmbed authors"
+		]
+	},
+	"discordcomponentembed-desc": "{{desc|name=DiscordComponentEmbed|url=https://github.com/kai8484/discord-component-embed}}",
+	"discordcomponentembed-magic-discord_embed": "The magic word for the parser function that configures a page's Discord link preview."
+}

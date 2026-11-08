@@ -1,0 +1,7 @@
+/vendor/
+/.phpunit.result.cache
+/.phpunit.cache/
+/phpunit.xml
+/phpunit-integration.xml
+/phpunit-core-contract.xml
+/composer.lock

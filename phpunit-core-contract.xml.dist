@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+	Core-contract suite: reflects over the real core classes the extension depends
+	on. Needs a MediaWiki checkout (MW_INSTALL_PATH) and no database.
+
+	Written for the PHPUnit that ships with MediaWiki (9.6 on 1.46), which is the
+	runner that executes it.
+-->
+<phpunit bootstrap="tests/bootstrap-core-contract.php"
+	colors="true"
+	convertDeprecationsToExceptions="false"
+	beStrictAboutOutputDuringTests="true">
+	<testsuites>
+		<testsuite name="core-contract">
+			<directory>tests/phpunit/core-contract</directory>
+		</testsuite>
+	</testsuites>
+</phpunit>

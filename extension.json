@@ -1,0 +1,93 @@
+{
+	"name": "DiscordComponentEmbed",
+	"type": "other",
+	"descriptionmsg": "discordcomponentembed-desc",
+	"license-name": "Unlicense",
+	"url": "https://github.com/kai8484/discord-component-embed",
+	"version": "1.0.0",
+	"requires": {
+		"MediaWiki": ">= 1.46.0"
+	},
+	"manifest_version": 2,
+	"AutoloadNamespaces": {
+		"DiscordComponentEmbed\\": "src/"
+	},
+	"ServiceWiringFiles": [
+		"src/ServiceWiring.php"
+	],
+	"MessagesDirs": {
+		"DiscordComponentEmbed": [
+			"i18n"
+		]
+	},
+	"ExtensionMessagesFiles": {
+		"DiscordComponentEmbedMagic": "i18n/DiscordComponentEmbed.i18n.magic.php"
+	},
+	"Hooks": {
+		"ParserFirstCallInit": "ParserFunction",
+		"ParserAfterTidy": "EmbedCollector",
+		"OutputPageParserOutput": "OutputHook",
+		"OutputPageAfterGetHeadLinksArray": "OutputHook",
+		"ScribuntoExternalLibraries": "ScribuntoHooks"
+	},
+	"HookHandlers": {
+		"ParserFunction": {
+			"class": "DiscordComponentEmbed\\Parser\\DiscordEmbedParserFunction",
+			"services": [
+				"DiscordComponentEmbed.ArgumentReader",
+				"DiscordComponentEmbed.DraftRecorder"
+			]
+		},
+		"EmbedCollector": {
+			"class": "DiscordComponentEmbed\\Parser\\EmbedCollector",
+			"services": [
+				"MainConfig",
+				"DiscordComponentEmbed.ConfigCompiler",
+				"DiscordComponentEmbed.PagePreviewFactory",
+				"DiscordComponentEmbed.ComponentBuilder",
+				"DiscordComponentEmbed.PayloadValidator",
+				"DiscordComponentEmbed.Logger"
+			]
+		},
+		"OutputHook": {
+			"class": "DiscordComponentEmbed\\Output\\DiscordEmbedOutputHook",
+			"services": [
+				"DiscordComponentEmbed.ComponentEmbedScript",
+				"DiscordComponentEmbed.OpenGraphTags"
+			]
+		},
+		"ScribuntoHooks": {
+			"class": "DiscordComponentEmbed\\Scribunto\\ScribuntoHooks"
+		}
+	},
+	"config": {
+		"DiscordComponentEmbedEnabled": {
+			"value": true,
+			"description": "Whether Discord component link previews are published at all."
+		},
+		"DiscordComponentEmbedDescriptionBudget": {
+			"value": 300,
+			"description": "Character budget for a preview description, applied to the component payload and to og:description alike."
+		},
+		"DiscordComponentEmbedThumbnailWidth": {
+			"value": 1200,
+			"description": "Width, in pixels, that preview thumbnails are rendered at. The same bound PageImages uses for its own og:image."
+		},
+		"DiscordComponentEmbedNamespaces": {
+			"value": null,
+			"description": "Namespace IDs that get previews, as returned by NamespaceInfo::getValidNamespaces(). Null means every namespace."
+		},
+		"DiscordComponentEmbedOpenGraph": {
+			"value": true,
+			"description": "Whether to add Open Graph fallback tags for keys no other source on the wiki emits."
+		},
+		"DiscordComponentEmbedComponents": {
+			"value": true,
+			"description": "Whether to publish the component payload. Off leaves the Open Graph tags alone, and Discord renders its own card: a larger clickable title, the description and the image, without buttons, gallery or accent."
+		},
+		"DiscordComponentEmbedTitleHeading": {
+			"value": 0,
+			"description": "Heading level the card's header is rendered at: 0 for body size, 1 to 3 for a heading, which is the only way a component's title gets bigger."
+		}
+	}
+}

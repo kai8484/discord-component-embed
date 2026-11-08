@@ -1,0 +1,37 @@
+{
+	"name": "discordembed/discord-component-embed",
+	"description": "Discord component link previews for MediaWiki articles",
+	"type": "mediawiki-extension",
+	"license": "Unlicense",
+	"keywords": [
+		"mediawiki",
+		"discord",
+		"link preview",
+		"open graph"
+	],
+	"require": {
+		"php": ">=8.3",
+		"ext-dom": "*",
+		"ext-mbstring": "*"
+	},
+	"require-dev": {
+		"phpunit/phpunit": "^11.5"
+	},
+	"autoload": {
+		"psr-4": {
+			"DiscordComponentEmbed\\": "src/"
+		}
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"DiscordComponentEmbed\\Tests\\Stubs\\": "tests/stubs/",
+			"DiscordComponentEmbed\\Tests\\": "tests/"
+		}
+	},
+	"scripts": {
+		"test": "phpunit"
+	},
+	"config": {
+		"sort-packages": true
+	}
+}
