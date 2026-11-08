@@ -68,18 +68,6 @@ wfLoadExtension( 'DiscordComponentEmbed' );
 Every argument is documented in [docs/Authoring.md](docs/Authoring.md); how to build
 and test the extension is in [docs/Development.md](docs/Development.md).
 
-## Things the wiki has to get right
-
-- **A protocol-relative `$wgServer` is read as `https://`.** Previews carry absolute
-  URLs and Discord refuses a link or a button without a scheme, so a wiki set to
-  `//wiki.example.com` still produces `https://` links here.
-- **Thumbnails are rendered during the page save** unless the wiki sets
-  `$wgGenerateThumbnailOnParse = false`. With the default, the first save of a page
-  that names a new image renders that thumbnail in the save request itself.
-- **Parsoid pages get no preview.** The preview is built in `ParserAfterTidy`, which
-  only the legacy parser fires; a wiki that serves Parsoid output for page views
-  loses previews silently rather than erroring.
-
 ## Licence
 
 Released into the public domain under [The Unlicense](COPYING).
