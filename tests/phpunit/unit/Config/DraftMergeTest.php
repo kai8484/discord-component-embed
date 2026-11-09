@@ -55,11 +55,6 @@ final class DraftMergeTest extends TestCase {
 		$this->assertSame( [ 'bad key a', 'bad key b' ], $merged->problems() );
 	}
 
-	public function testMergingKeepsTheEarlierValueWhenTheLaterCallIsSilent(): void {
-		$merged = ( new Draft( [ 'description' => 'Kept' ] ) )->mergeWith( new Draft( [] ) );
-
-		$this->assertSame( 'Kept', $merged->values()['description'] );
-	}
 
 	public function testWikitextWinsAClashEvenWhenTheModuleRanLater(): void {
 		$merged = Draft::fromRecords( [

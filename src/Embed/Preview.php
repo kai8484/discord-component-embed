@@ -30,6 +30,7 @@ final class Preview {
 		public readonly array $buttons = [],
 		public readonly ?int $accent = null,
 		public readonly bool $spoiler = false,
+		public readonly string $footer = '',
 	) {
 	}
 
@@ -47,10 +48,13 @@ final class Preview {
 	public function toContent(): PreviewContent {
 		return new PreviewContent(
 			title: $this->titleMarkdown === '' ? null : $this->titleMarkdown,
-			description: $this->descriptionMarkdown() === '' ? null : $this->descriptionMarkdown(),
+			// The body is prose on a card: links in it are noise, so only their labels stay.
+			description: $this->descriptionMarkdown() === ''
+				? null
+				: \DiscordComponentEmbed\Content\DiscordMarkdown::toPlainText( $this->descriptionMarkdown() ),
 			image: $this->image,
 			gallery: $this->gallery,
-			buttons: $this->buttons,
+			footer: $this->footer === '' ? null : $this->footer,
 			accent: $this->accent,
 			spoiler: $this->spoiler
 		);

@@ -5,7 +5,6 @@ declare( strict_types=1 );
 namespace DiscordComponentEmbed\Tests\Unit\Embed;
 
 use DiscordComponentEmbed\Config\Limits;
-use DiscordComponentEmbed\Embed\ActionRowPacker;
 use DiscordComponentEmbed\Embed\ComponentBuilder;
 use DiscordComponentEmbed\Embed\PayloadValidator;
 use DiscordComponentEmbed\Embed\PreviewContent;
@@ -23,7 +22,7 @@ final class PayloadValidatorTest extends TestCase {
 
 	/** @return list<array<string, mixed>> */
 	private function componentsFor( PreviewContent $content ): array {
-		return ( new ComponentBuilder( new ActionRowPacker() ) )->build( $content );
+		return ( new ComponentBuilder() )->build( $content );
 	}
 
 	/** @return list<string> */
@@ -44,13 +43,34 @@ final class PayloadValidatorTest extends TestCase {
 		return $buttons;
 	}
 
+	/**
+	 * A container holding one action row, so the validator's button rules can be
+	 * exercised independently of what the builder now emits.
+	 *
+	 * @param list<array<string, mixed>> $buttons
+	 * @return list<array<string, mixed>>
+	 */
+	private function payloadWithButtons( array $buttons ): array {
+		return [ [
+			'type' => Limits::TYPE_CONTAINER,
+			'components' => [
+				[ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => '**Doorman**' ],
+				[ 'type' => Limits::TYPE_ACTION_ROW, 'components' => $buttons ],
+			],
+		] ];
+	}
+
+	/** @return array<string, mixed> */
+	private function linkButton( string $url, string $label ): array {
+		return [ 'type' => Limits::TYPE_BUTTON, 'style' => Limits::BUTTON_STYLE_LINK, 'url' => $url, 'label' => $label ];
+	}
+
 	public function testAOrdinaryPreviewIsValid(): void {
 		$problems = $this->problemsFor( new PreviewContent(
 			title: '**Doorman**',
 			description: 'A game about doors.',
 			image: new ResolvedMedia( 'https://wiki.example/door.png', 'A door' ),
 			gallery: [ new ResolvedMedia( 'https://wiki.example/one.png', 'First' ) ],
-			buttons: [ new ResolvedButton( 'https://wiki.example/Doorman', 'Doorman' ) ],
 			accent: 0x5865F2
 		) );
 
@@ -62,40 +82,35 @@ final class PayloadValidatorTest extends TestCase {
 	}
 
 	public function testALabelLongerThanEightyCharactersIsRejected(): void {
-		$problems = $this->problemsFor( new PreviewContent(
-			title: '**Doorman**',
-			buttons: $this->buttons( 1, Limits::MAX_LABEL_CHARS + 1 )
-		) );
+		$problems = ( new PayloadValidator() )->validate( $this->payloadWithButtons( [
+			$this->linkButton( 'https://example.com/a', str_repeat( 'L', Limits::MAX_LABEL_CHARS + 1 ) ),
+		] ) );
 
 		$this->assertNotSame( [], $problems );
 		$this->assertStringContainsString( 'label', implode( ' ', $problems ) );
 	}
 
 	public function testALabelOfExactlyEightyCharactersIsAccepted(): void {
-		$this->assertSame( [], $this->problemsFor( new PreviewContent(
-			title: '**Doorman**',
-			buttons: $this->buttons( 1, Limits::MAX_LABEL_CHARS )
-		) ) );
+		$problems = ( new PayloadValidator() )->validate( $this->payloadWithButtons( [
+			$this->linkButton( 'https://example.com/a', str_repeat( 'L', Limits::MAX_LABEL_CHARS ) ),
+		] ) );
+
+		$this->assertSame( [], $problems );
 	}
 
 	public function testAUrlLongerThanFiveHundredAndTwelveCharactersIsRejected(): void {
-		$problems = $this->problemsFor( new PreviewContent(
-			title: '**Doorman**',
-			buttons: [ new ResolvedButton(
-				'https://example.com/' . str_repeat( 'a', Limits::MAX_URL_CHARS ),
-				'Too long'
-			) ]
-		) );
+		$problems = ( new PayloadValidator() )->validate( $this->payloadWithButtons( [
+			$this->linkButton( 'https://example.com/' . str_repeat( 'a', Limits::MAX_URL_CHARS ), 'Too long' ),
+		] ) );
 
 		$this->assertNotSame( [], $problems );
 		$this->assertStringContainsString( 'url', implode( ' ', $problems ) );
 	}
 
 	public function testANonHttpButtonUrlIsRejected(): void {
-		$problems = $this->problemsFor( new PreviewContent(
-			title: '**Doorman**',
-			buttons: [ new ResolvedButton( 'ftp://example.com/read', 'Read' ) ]
-		) );
+		$problems = ( new PayloadValidator() )->validate( $this->payloadWithButtons( [
+			$this->linkButton( 'ftp://example.com/read', 'Read' ),
+		] ) );
 
 		$this->assertNotSame( [], $problems );
 		$this->assertStringContainsString( 'http', implode( ' ', $problems ) );
@@ -122,28 +137,13 @@ final class PayloadValidatorTest extends TestCase {
 	}
 
 	public function testATooDeepPayloadIsRejected(): void {
-		$buttons = $this->buttons( Limits::MAX_BUTTONS );
-		$gallery = [];
-		for ( $i = 0; $i < Limits::MAX_GALLERY_ITEMS; $i++ ) {
-			$gallery[] = new ResolvedMedia( 'https://wiki.example/' . $i . '.png' );
+		$components = [ [ 'type' => Limits::TYPE_CONTAINER, 'components' => [] ] ];
+
+		for ( $i = 0; $i < Limits::MAX_COMPONENTS; $i++ ) {
+			$components[0]['components'][] = [ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => 'x' . $i ];
 		}
 
-		$content = new PreviewContent(
-			title: '**Doorman**',
-			description: 'A game.',
-			image: new ResolvedMedia( 'https://wiki.example/door.png' ),
-			gallery: $gallery,
-			buttons: $buttons
-		);
-
-		$components = $this->componentsFor( $content );
-		$problems = ( new PayloadValidator() )->validate( $components );
-
-		$this->assertSame( [], $problems, 'the builder must not produce a payload past Discord\'s component cap' );
-		$this->assertLessThanOrEqual(
-			Limits::MAX_COMPONENTS,
-			$this->countComponents( $components )
-		);
+		$this->assertNotSame( [], ( new PayloadValidator() )->validate( $components ) );
 	}
 
 	public function testMoreThanFiveActionRowsIsRejected(): void {

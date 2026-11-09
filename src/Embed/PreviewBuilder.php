@@ -45,6 +45,8 @@ final class PreviewBuilder {
 		private readonly bool $components = true,
 		// Title truncation is word-boundary truncation, the same rule descriptions use.
 		private readonly Truncator $truncator = new Truncator(),
+		// The small print under the divider, already as markdown; empty for none.
+		private readonly string $footer = '',
 	) {
 	}
 
@@ -102,7 +104,8 @@ final class PreviewBuilder {
 			gallery: $gallery->resolved,
 			buttons: $buttons->buttons,
 			accent: $config->accent,
-			spoiler: $config->spoiler
+			spoiler: $config->spoiler,
+			footer: $this->footer
 		);
 
 		return new PreviewResult(

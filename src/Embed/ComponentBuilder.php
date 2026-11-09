@@ -19,11 +19,6 @@ use DiscordComponentEmbed\Media\ResolvedMedia;
  */
 final class ComponentBuilder {
 
-	public function __construct(
-		private readonly ActionRowPacker $buttonPacker,
-	) {
-	}
-
 	/**
 	 * @return list<array<string, mixed>> The payload's top-level components.
 	 */
@@ -77,15 +72,15 @@ final class ComponentBuilder {
 			$children = $texts;
 		}
 
-		// The gallery is appended before the buttons so a card reads media then
-		// actions; trimming below finds the gallery by type, not by position, so the
-		// layout does not decide what gets dropped.
+		// The gallery comes before the small print; trimming below finds the gallery by
+		// type, not by position, so the layout does not decide what gets dropped.
 		if ( $galleryItems !== [] ) {
 			$children[] = $this->mediaGallery( $galleryItems );
 		}
 
-		foreach ( $this->buttonPacker->pack( $content->buttons ) as $row ) {
-			$children[] = $this->actionRow( $row );
+		if ( $content->footer !== null && $content->footer !== '' ) {
+			$children[] = [ 'type' => Limits::TYPE_SEPARATOR, 'divider' => true, 'spacing' => 1 ];
+			$children[] = [ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => $content->footer ];
 		}
 
 		return $this->fitComponentBudget( $children );
@@ -200,19 +195,4 @@ final class ComponentBuilder {
 		return $rendered;
 	}
 
-	/**
-	 * @param list<ResolvedButton> $buttons
-	 * @return array<string, mixed>
-	 */
-	private function actionRow( array $buttons ): array {
-		return [
-			'type' => Limits::TYPE_ACTION_ROW,
-			'components' => array_map( fn ( ResolvedButton $button ): array => [
-				'type' => Limits::TYPE_BUTTON,
-				'style' => Limits::BUTTON_STYLE_LINK,
-				'label' => $button->label,
-				'url' => $button->url,
-			], $buttons ),
-		];
-	}
 }

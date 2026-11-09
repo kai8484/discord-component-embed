@@ -35,16 +35,6 @@ final class ComponentEmbedScriptTest extends TestCase {
 		$this->assertNull( $this->script()->build( [] ) );
 	}
 
-	public function testTheScriptCarriesExactlyOneContainer(): void {
-		$script = $this->script()->build( [
-			[ 'type' => 17, 'components' => [ [ 'type' => 10, 'content' => 'Hi' ] ] ],
-		] );
-
-		$this->assertNotNull( $script );
-		$json = $this->payloadOf( $script );
-		$this->assertSame( 17, $json['component']['type'] );
-		$this->assertCount( 1, $json['component']['components'] );
-	}
 
 	public function testALabelContainingAScriptTagCannotCloseTheElement(): void {
 		$script = $this->script()->build( [

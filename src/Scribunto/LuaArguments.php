@@ -29,7 +29,7 @@ final class LuaArguments {
 	 * @param array<array-key, mixed> $arguments
 	 * @return array<array-key, mixed>
 	 */
-	public static function toNamedArguments( array $arguments ): array {
+	private static function toNamedArguments( array $arguments ): array {
 		$named = [];
 
 		foreach ( $arguments as $name => $value ) {

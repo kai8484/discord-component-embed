@@ -6,10 +6,10 @@ namespace DiscordComponentEmbed\MediaWiki;
 
 use Config;
 use DiscordComponentEmbed\Content\DescriptionBuilder;
+use DiscordComponentEmbed\Content\DiscordMarkdown;
 use DiscordComponentEmbed\Content\IntroExtractor;
 use DiscordComponentEmbed\Content\LinkBase;
 use DiscordComponentEmbed\Content\Truncator;
-use DiscordComponentEmbed\Embed\ActionRowPacker;
 use DiscordComponentEmbed\Embed\ButtonResolver;
 use DiscordComponentEmbed\Embed\ComponentBuilder;
 use DiscordComponentEmbed\Embed\PayloadValidator;
@@ -57,11 +57,13 @@ final class PagePreviewFactory {
 			new DescriptionBuilder( new Truncator(), $this->descriptionBudget() ),
 			new ButtonResolver( $links, new Truncator() ),
 			$this->titleHeading(),
-			(bool)$this->config->get( 'DiscordComponentEmbedComponents' )
+			(bool)$this->config->get( 'DiscordComponentEmbedComponents' ),
+			new Truncator(),
+			$this->footerMarkdown()
 		);
 	}
 
-	public function imageResolver(): RepoGroupImageResolver {
+	private function imageResolver(): RepoGroupImageResolver {
 		return new RepoGroupImageResolver( $this->repoGroup, $this->urlUtils, $this->thumbnailWidth() );
 	}
 
@@ -77,7 +79,7 @@ final class PagePreviewFactory {
 	}
 
 	public function componentBuilder(): ComponentBuilder {
-		return new ComponentBuilder( new ActionRowPacker() );
+		return new ComponentBuilder();
 	}
 
 	public function payloadValidator(): PayloadValidator {
@@ -103,6 +105,21 @@ final class PagePreviewFactory {
 	/**
 	 * 0 keeps the header at body size; 1 to 3 ask Discord for a heading.
 	 */
+	/**
+	 * The small print under the divider: the wiki's mark and its name, and nothing
+	 * else.
+	 */
+	private function footerMarkdown(): string {
+		if ( !$this->config->get( 'DiscordComponentEmbedFooter' ) ) {
+			return '';
+		}
+
+		$emoji = trim( (string)$this->config->get( 'DiscordComponentEmbedFooterEmoji' ) );
+		$site = trim( (string)$this->config->get( 'Sitename' ) );
+
+		return '-# ' . ( $emoji === '' ? '' : $emoji . '  ' ) . DiscordMarkdown::escapeText( $site );
+	}
+
 	private function titleHeading(): int {
 		return (int)$this->config->get( 'DiscordComponentEmbedTitleHeading' );
 	}

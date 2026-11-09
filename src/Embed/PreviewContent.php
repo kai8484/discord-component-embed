@@ -16,14 +16,14 @@ final class PreviewContent {
 	/**
 	 * @param ResolvedMedia|null $image Section thumbnail (or the standalone image).
 	 * @param list<ResolvedMedia> $gallery Gallery items, in author order.
-	 * @param list<ResolvedButton> $buttons Buttons, in author order.
+	 * @param string|null $footer Small print under a divider, already as markdown.
 	 */
 	public function __construct(
 		public readonly ?string $title = null,
 		public readonly ?string $description = null,
 		public readonly ?ResolvedMedia $image = null,
 		public readonly array $gallery = [],
-		public readonly array $buttons = [],
+		public readonly ?string $footer = null,
 		public readonly ?int $accent = null,
 		public readonly bool $spoiler = false,
 	) {
@@ -38,6 +38,6 @@ final class PreviewContent {
 			&& $this->description === null
 			&& $this->image === null
 			&& $this->gallery === []
-			&& $this->buttons === [];
+			&& $this->footer === null;
 	}
 }

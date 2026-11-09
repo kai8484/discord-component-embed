@@ -66,7 +66,7 @@
 			"description": "Whether Discord component link previews are published at all."
 		},
 		"DiscordComponentEmbedDescriptionBudget": {
-			"value": 300,
+			"value": 200,
 			"description": "Character budget for a preview description, applied to the component payload and to og:description alike."
 		},
 		"DiscordComponentEmbedThumbnailWidth": {
@@ -85,8 +85,16 @@
 			"value": true,
 			"description": "Whether to publish the component payload. Off leaves the Open Graph tags alone, and Discord renders its own card: a larger clickable title, the description and the image, without buttons, gallery or accent."
 		},
+		"DiscordComponentEmbedFooter": {
+			"value": true,
+			"description": "Whether to print the site name under a divider at the bottom of the card."
+		},
+		"DiscordComponentEmbedFooterEmoji": {
+			"value": "",
+			"description": "Emoji placed before the site name in the footer, if any."
+		},
 		"DiscordComponentEmbedTitleHeading": {
-			"value": 0,
+			"value": 2,
 			"description": "Heading level the card's header is rendered at: 0 for body size, 1 to 3 for a heading, which is the only way a component's title gets bigger."
 		}
 	}

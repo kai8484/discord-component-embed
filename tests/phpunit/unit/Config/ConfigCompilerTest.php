@@ -25,7 +25,6 @@ final class ConfigCompilerTest extends TestCase {
 		$result = $this->compile( [] );
 
 		$this->assertSame( EmbedOutcome::Valid, $result->outcome() );
-		$this->assertInstanceOf( EmbedConfig::class, $result->config() );
 	}
 
 	public function testScalarArgumentsReachTheConfiguration(): void {

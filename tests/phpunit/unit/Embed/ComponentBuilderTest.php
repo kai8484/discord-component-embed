@@ -5,10 +5,9 @@ declare( strict_types=1 );
 namespace DiscordComponentEmbed\Tests\Unit\Embed;
 
 use DiscordComponentEmbed\Config\Limits;
-use DiscordComponentEmbed\Embed\ActionRowPacker;
 use DiscordComponentEmbed\Embed\ComponentBuilder;
+use DiscordComponentEmbed\Embed\ComponentCount;
 use DiscordComponentEmbed\Embed\PreviewContent;
-use DiscordComponentEmbed\Embed\ResolvedButton;
 use DiscordComponentEmbed\Media\ResolvedMedia;
 use PHPUnit\Framework\TestCase;
 
@@ -18,7 +17,7 @@ use PHPUnit\Framework\TestCase;
 final class ComponentBuilderTest extends TestCase {
 
 	private function builder(): ComponentBuilder {
-		return new ComponentBuilder( new ActionRowPacker() );
+		return new ComponentBuilder();
 	}
 
 	/**
@@ -122,38 +121,27 @@ final class ComponentBuilderTest extends TestCase {
 		$this->assertTrue( $gallery['items'][1]['spoiler'] );
 	}
 
-	public function testButtonsBecomeLinkButtonsInActionRows(): void {
-		$components = $this->builder()->build(
-			new PreviewContent(
-				title: '**Doorman**',
-				buttons: [ new ResolvedButton( 'https://wiki.example/Doorman', 'Doorman' ) ]
-			)
-		);
-
-		$row = $this->findByType( $components[0]['components'], Limits::TYPE_ACTION_ROW );
-		$this->assertNotNull( $row );
-		$this->assertSame( Limits::TYPE_BUTTON, $row['components'][0]['type'] );
-		$this->assertSame( Limits::BUTTON_STYLE_LINK, $row['components'][0]['style'] );
-		$this->assertSame( 'Doorman', $row['components'][0]['label'] );
-		$this->assertSame( 'https://wiki.example/Doorman', $row['components'][0]['url'] );
-	}
-
-	public function testSixButtonsProduceTwoActionRows(): void {
-		$buttons = [];
-
-		for ( $i = 1; $i <= 6; $i++ ) {
-			$buttons[] = new ResolvedButton( 'https://example.com/' . $i, 'B' . $i );
-		}
-
-		$components = $this->builder()->build( new PreviewContent( title: '**Doorman**', buttons: $buttons ) );
-		$rows = array_values( array_filter(
-			$components[0]['components'],
-			static fn ( array $component ): bool => $component['type'] === Limits::TYPE_ACTION_ROW
+	public function testAFooterGetsADividerAndTheSmallPrint(): void {
+		$components = $this->builder()->build( new PreviewContent(
+			title: '**Doorman**',
+			footer: '-# From the wiki - [join our discord](https://example.com)'
 		) );
 
-		$this->assertCount( 2, $rows );
-		$this->assertCount( 5, $rows[0]['components'] );
-		$this->assertCount( 1, $rows[1]['components'] );
+		$children = $components[0]['components'];
+		$types = array_map( static fn ( array $c ): int => $c['type'], $children );
+
+		$this->assertSame(
+			[ Limits::TYPE_TEXT_DISPLAY, Limits::TYPE_SEPARATOR, Limits::TYPE_TEXT_DISPLAY ],
+			$types
+		);
+		$this->assertTrue( $children[1]['divider'] );
+		$this->assertSame( '-# From the wiki - [join our discord](https://example.com)', $children[2]['content'] );
+	}
+
+	public function testNoFooterMeansNoDivider(): void {
+		$components = $this->builder()->build( new PreviewContent( title: '**Doorman**' ) );
+
+		$this->assertNull( $this->findByType( $components[0]['components'], Limits::TYPE_SEPARATOR ) );
 	}
 
 	public function testAccentIsEmittedOnlyWhenSet(): void {
@@ -172,19 +160,19 @@ final class ComponentBuilderTest extends TestCase {
 		$this->assertTrue( $with[0]['spoiler'] );
 	}
 
-	public function testContentOrderIsTitleThenDescriptionThenGalleryThenButtons(): void {
+	public function testContentOrderIsTitleDescriptionGallerySeparatorFooter(): void {
 		$components = $this->builder()->build(
 			new PreviewContent(
 				title: '**Doorman**',
 				description: 'A game.',
 				gallery: [ new ResolvedMedia( 'https://wiki.example/one.png' ) ],
-				buttons: [ new ResolvedButton( 'https://wiki.example/Doorman', 'Doorman' ) ]
+				footer: '-# From the wiki - [join our discord](https://example.com)'
 			)
 		);
 
 		$types = array_column( $components[0]['components'], 'type' );
 		$this->assertSame(
-			[ Limits::TYPE_TEXT_DISPLAY, Limits::TYPE_TEXT_DISPLAY, Limits::TYPE_MEDIA_GALLERY, Limits::TYPE_ACTION_ROW ],
+			[ Limits::TYPE_TEXT_DISPLAY, Limits::TYPE_TEXT_DISPLAY, Limits::TYPE_MEDIA_GALLERY, Limits::TYPE_SEPARATOR, Limits::TYPE_TEXT_DISPLAY ],
 			$types
 		);
 	}
@@ -225,12 +213,7 @@ final class ComponentBuilderTest extends TestCase {
 		);
 	}
 
-	public function testAFullPayloadGivesUpGalleryItemsButKeepsEveryButton(): void {
-		$buttons = [];
-		for ( $i = 1; $i <= Limits::MAX_BUTTONS; $i++ ) {
-			$buttons[] = new ResolvedButton( 'https://example.com/' . $i, 'B' . $i );
-		}
-
+	public function testAFullPayloadGivesUpGalleryItemsToStayInsideTheCap(): void {
 		$gallery = [];
 		for ( $i = 1; $i <= Limits::MAX_GALLERY_ITEMS; $i++ ) {
 			$gallery[] = new ResolvedMedia( 'https://wiki.example/' . $i . '.png' );
@@ -239,21 +222,11 @@ final class ComponentBuilderTest extends TestCase {
 		$components = $this->builder()->build( new PreviewContent(
 			title: '**Doorman**',
 			description: 'A game.',
-			image: new ResolvedMedia( 'https://wiki.example/door.png' ),
 			gallery: $gallery,
-			buttons: $buttons
+			footer: '-# From the wiki'
 		) );
 
-		$rows = array_values( array_filter(
-			$components[0]['components'],
-			static fn ( array $component ): bool => $component['type'] === Limits::TYPE_ACTION_ROW
-		) );
-		$this->assertCount( Limits::MAX_ACTION_ROWS, $rows );
-
-		$buttonTotal = 0;
-		foreach ( $rows as $row ) {
-			$buttonTotal += count( $row['components'] );
-		}
-		$this->assertSame( Limits::MAX_BUTTONS, $buttonTotal );
+		$this->assertLessThanOrEqual( Limits::MAX_COMPONENTS, ComponentCount::of( $components ) );
 	}
+
 }
