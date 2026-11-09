@@ -159,6 +159,30 @@ final class DiscordMarkdownTest extends TestCase {
 		$this->assertSame( '', DiscordMarkdown::truncateVisible( '[](https://example.com/long/url)', 300 ) );
 	}
 
+	public function testStrippingALinkKeepsItsLabelAndEverythingElse(): void {
+		$this->assertSame(
+			'See the page and another now.',
+			DiscordMarkdown::stripLinkTargets( 'See [the page](https://wiki.example/a) and [another](https://x/y_(z)) now.' )
+		);
+	}
+
+	public function testStrippingALinkLeavesEscapedTextEscaped(): void {
+		// The card body must not gain formatting the extractor escaped, and an escaped
+		// bracket pair must not become a link.
+		$bs = chr( 92 );
+
+		$this->assertSame(
+			'Buy now ' . $bs . '[click' . $bs . '](https://example.com) and ' . $bs . '*starred' . $bs . ' text.',
+			DiscordMarkdown::stripLinkTargets(
+				'Buy now ' . $bs . '[click' . $bs . '](https://example.com) and ' . $bs . '*starred' . $bs . ' text.'
+			)
+		);
+	}
+
+	public function testStrippingALinkLeavesCodeAlone(): void {
+		$this->assertSame( 'Code `a](b` stays.', DiscordMarkdown::stripLinkTargets( 'Code `a](b` stays.' ) );
+	}
+
 	public function testEmphasisIsDeliberatelyNotTracked(): void {
 		// Guessing where an author's asterisks belong cost half a sentence in review.
 		// A stray "**" is accepted; a deleted sentence is not.

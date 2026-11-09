@@ -78,6 +78,118 @@ final class DiscordMarkdown {
 	}
 
 	/**
+	 * The same markdown without link targets, leaving everything else exactly as it is.
+	 *
+	 * The card's body is prose: a link's address is noise, but its label, its escapes and
+	 * its emphasis are not. toPlainText() is the wrong tool here because it also undoes
+	 * escapes, which turns text an author escaped into formatting — or into a live link.
+	 */
+	public static function stripLinkTargets( string $markdown ): string {
+		$length = strlen( $markdown );
+		$out = '';
+		$index = 0;
+
+		while ( $index < $length ) {
+			$character = $markdown[$index];
+
+			if ( $character === '\\' && $index + 1 < $length ) {
+				$size = 1 + self::characterSize( $markdown, $index + 1 );
+				$out .= substr( $markdown, $index, $size );
+				$index += $size;
+
+				continue;
+			}
+
+			if ( $character === '[' ) {
+				$target = self::targetEnd( $markdown, $index );
+
+				if ( $target !== null ) {
+					$out .= substr( $markdown, $index + 1, $target['labelEnd'] - $index - 2 );
+					$index = $target['end'];
+
+					continue;
+				}
+			}
+
+			$size = self::characterSize( $markdown, $index );
+			$out .= substr( $markdown, $index, $size );
+			$index += $size;
+		}
+
+		return $out;
+	}
+
+	/**
+	 * Where the label of a masked link starting at $start ends, and where its target does,
+	 * or null when this bracket is not one.
+	 *
+	 * @return array{labelEnd: int, end: int}|null
+	 */
+	private static function targetEnd( string $markdown, int $start ): ?array {
+		$length = strlen( $markdown );
+		$index = $start + 1;
+		$depth = 0;
+
+		while ( $index < $length ) {
+			$character = $markdown[$index];
+
+			if ( $character === '\\' && $index + 1 < $length ) {
+				$index += 1 + self::characterSize( $markdown, $index + 1 );
+
+				continue;
+			}
+
+			if ( $character === '[' ) {
+				$index++;
+
+				continue;
+			}
+
+			if ( $character === ']' ) {
+				break;
+			}
+
+			$index += self::characterSize( $markdown, $index );
+		}
+
+		if ( $index >= $length || $markdown[$index] !== ']' ) {
+			return null;
+		}
+
+		$labelEnd = $index + 1;
+
+		if ( $labelEnd >= $length || $markdown[$labelEnd] !== '(' ) {
+			return null;
+		}
+
+		$index = $labelEnd + 1;
+
+		while ( $index < $length ) {
+			$character = $markdown[$index];
+
+			if ( $character === '\\' && $index + 1 < $length ) {
+				$index += 1 + self::characterSize( $markdown, $index + 1 );
+
+				continue;
+			}
+
+			if ( $character === '(' ) {
+				$depth++;
+			} elseif ( $character === ')' ) {
+				if ( $depth === 0 ) {
+					return [ 'labelEnd' => $labelEnd, 'end' => $index + 1 ];
+				}
+
+				$depth--;
+			}
+
+			$index++;
+		}
+
+		return null;
+	}
+
+	/**
 	 * Cuts a markdown string to a budget of *visible* characters.
 	 *
 	 * A masked link's target is invisible on the card — `[Shop](https://wiki/…)` shows

@@ -28,6 +28,9 @@ final class Limits {
 	public const MAX_COMPONENTS = 40;
 	public const MAX_MEDIA_DESCRIPTION_CHARS = 1024;
 
+	/** Discord refuses a message whose text display content is longer than this. */
+	public const MAX_TEXT_DISPLAY_CHARS = 4000;
+
 	/** Component type numbers, as published. */
 	public const TYPE_ACTION_ROW = 1;
 	public const TYPE_BUTTON = 2;

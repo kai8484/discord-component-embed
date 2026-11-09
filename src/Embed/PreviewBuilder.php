@@ -108,10 +108,13 @@ final class PreviewBuilder {
 			footer: $this->footer
 		);
 
+		// Buttons are resolved for the model but nothing renders them, so a button the
+		// validator would refuse is a note rather than a reason to publish no card at
+		// all. Rejecting here would let an argument nobody sees suppress the preview.
 		return new PreviewResult(
 			$preview,
-			$buttons->problems,
-			array_merge( $buttons->dropped, $this->mediaDropped( $unresolved ) )
+			[],
+			array_merge( $buttons->problems, $buttons->dropped, $this->mediaDropped( $unresolved ) )
 		);
 	}
 

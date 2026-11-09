@@ -206,6 +206,24 @@ final class PreviewBuilderTest extends TestCase {
 		$this->assertSame( [], $result->problems );
 	}
 
+	public function testAnUnusableButtonDoesNotSuppressTheCard(): void {
+		// Nothing renders buttons any more, so a button the validator would refuse is a
+		// note in the log, not a reason to publish no preview at all.
+		$links = [ 'Doorman' => 'https://wiki.example/wiki/Doorman' ];
+
+		$result = $this->builder( $links )->build( new PreviewRequest(
+			'Doorman',
+			new EmbedConfig(
+				title: 'Doorman',
+				buttons: [ new ButtonSpec( 'Doorman', str_repeat( 'a', 81 ), ButtonTargetKind::PageLink ) ]
+			),
+			null
+		) );
+
+		$this->assertSame( [], $result->problems, 'the card still publishes' );
+		$this->assertNotSame( [], $result->dropped, 'and the button is reported' );
+	}
+
 	public function testAProblemWithOneButtonDoesNotRemoveTheOtherOnes(): void {
 		$links = [ 'Doorman' => 'https://wiki.example/wiki/Doorman' ];
 

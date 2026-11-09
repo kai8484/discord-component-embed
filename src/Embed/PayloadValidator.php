@@ -68,6 +68,16 @@ final class PayloadValidator {
 
 		$problems = array_merge( $problems, $this->validateContainer( $components[0] ) );
 
+		$characters = $this->textCharacters( $components );
+
+		if ( $characters > Limits::MAX_TEXT_DISPLAY_CHARS ) {
+			$problems[] = sprintf(
+				'Discord allows at most %d characters of text per message, this payload has %d.',
+				Limits::MAX_TEXT_DISPLAY_CHARS,
+				$characters
+			);
+		}
+
 		return array_values( array_unique( $problems ) );
 	}
 
@@ -201,7 +211,10 @@ final class PayloadValidator {
 		foreach ( $children as $child ) {
 			if ( ( $child['type'] ?? null ) !== Limits::TYPE_TEXT_DISPLAY ) {
 				$problems[] = 'A section may only contain text displays.';
+				continue;
 			}
+
+			$problems = array_merge( $problems, $this->validateTextDisplay( $child ) );
 		}
 
 		$accessory = $section['accessory'] ?? null;
@@ -259,6 +272,32 @@ final class PayloadValidator {
 	}
 
 	/**
+	 * Every character a text display in this tree would put on screen.
+	 *
+	 * Discord's limit is per message, not per display, so a card with a title, a
+	 * description and a footer spends one budget between them.
+	 *
+	 * @param array<mixed> $node
+	 */
+	private function textCharacters( array $node ): int {
+		$characters = 0;
+
+		foreach ( $node as $key => $value ) {
+			if ( !is_array( $value ) ) {
+				continue;
+			}
+
+			if ( ( $value['type'] ?? null ) === Limits::TYPE_TEXT_DISPLAY && is_string( $value['content'] ?? null ) ) {
+				$characters += mb_strlen( $value['content'] );
+			}
+
+			$characters += $this->textCharacters( $value );
+		}
+
+		return $characters;
+	}
+
+	/**
 	 * @return list<string>
 	 */
 	private function validateTextDisplay( array $display ): array {
@@ -266,6 +305,14 @@ final class PayloadValidator {
 
 		if ( !is_string( $content ) || trim( $content ) === '' ) {
 			return [ 'A text display cannot be empty.' ];
+		}
+
+		if ( mb_strlen( $content ) > Limits::MAX_TEXT_DISPLAY_CHARS ) {
+			return [ sprintf(
+				'A text display can be at most %d characters, this one is %d.',
+				Limits::MAX_TEXT_DISPLAY_CHARS,
+				mb_strlen( $content )
+			) ];
 		}
 
 		return [];

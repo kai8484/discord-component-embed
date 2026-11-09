@@ -238,6 +238,61 @@ final class PayloadValidatorTest extends TestCase {
 		$this->assertNotSame( [], $problems );
 	}
 
+	public function testATextDisplayLongerThanDiscordsLimitIsRejected(): void {
+		// Only reachable if a wiki raises the description budget above 4,000, which is
+		// exactly when nobody is watching.
+		$tooLong = [ [ 'type' => Limits::TYPE_CONTAINER, 'components' => [
+			[ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => str_repeat( 'a', Limits::MAX_TEXT_DISPLAY_CHARS + 1 ) ],
+		] ] ];
+
+		$problems = ( new PayloadValidator() )->validate( $tooLong );
+
+		$this->assertNotSame( [], $problems );
+		$this->assertStringContainsString( 'text display', implode( ' ', $problems ) );
+	}
+
+	public function testATextDisplayAtDiscordsLimitIsAccepted(): void {
+		$atLimit = [ [ 'type' => Limits::TYPE_CONTAINER, 'components' => [
+			[ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => str_repeat( 'a', Limits::MAX_TEXT_DISPLAY_CHARS ) ],
+		] ] ];
+
+		$this->assertSame( [], ( new PayloadValidator() )->validate( $atLimit ) );
+	}
+
+	public function testATextDisplayInsideASectionIsCheckedToo(): void {
+		// With an image the title and description live inside a section, so a check that
+		// only looked at top-level children skipped them.
+		$payload = [ [ 'type' => Limits::TYPE_CONTAINER, 'components' => [ [
+			'type' => Limits::TYPE_SECTION,
+			'components' => [ [
+				'type' => Limits::TYPE_TEXT_DISPLAY,
+				'content' => str_repeat( 'a', Limits::MAX_TEXT_DISPLAY_CHARS + 1 ),
+			] ],
+			'accessory' => [ 'type' => Limits::TYPE_THUMBNAIL, 'media' => [ 'url' => 'https://x/a.png' ] ],
+		] ] ] ];
+
+		$this->assertNotSame( [], ( new PayloadValidator() )->validate( $payload ) );
+	}
+
+	public function testTheTextBudgetIsForTheWholeMessage(): void {
+		// Two displays of 2,500 are fine on their own and over the line together.
+		$payload = [ [ 'type' => Limits::TYPE_CONTAINER, 'components' => [
+			[ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => str_repeat( 'a', 2500 ) ],
+			[ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => str_repeat( 'b', 2500 ) ],
+		] ] ];
+
+		$this->assertNotSame( [], ( new PayloadValidator() )->validate( $payload ) );
+	}
+
+	public function testTwoDisplaysInsideTheBudgetAreAccepted(): void {
+		$payload = [ [ 'type' => Limits::TYPE_CONTAINER, 'components' => [
+			[ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => str_repeat( 'a', 1500 ) ],
+			[ 'type' => Limits::TYPE_TEXT_DISPLAY, 'content' => str_repeat( 'b', 1500 ) ],
+		] ] ];
+
+		$this->assertSame( [], ( new PayloadValidator() )->validate( $payload ) );
+	}
+
 	public function testAnIllegalContainerChildIsRejected(): void {
 		$components = [ [
 			'type' => Limits::TYPE_CONTAINER,

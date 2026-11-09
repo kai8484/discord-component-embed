@@ -6,6 +6,7 @@ namespace DiscordComponentEmbed\MediaWiki;
 
 use Config;
 use DiscordComponentEmbed\Content\DescriptionBuilder;
+use DiscordComponentEmbed\Content\DiscordEmoji;
 use DiscordComponentEmbed\Content\DiscordMarkdown;
 use DiscordComponentEmbed\Content\IntroExtractor;
 use DiscordComponentEmbed\Content\LinkBase;
@@ -114,7 +115,14 @@ final class PagePreviewFactory {
 			return '';
 		}
 
+		// The footer is markdown, and an emoji goes into it verbatim, so anything that is
+		// not a single emoji mention would spill into the formatting around it.
 		$emoji = trim( (string)$this->config->get( 'DiscordComponentEmbedFooterEmoji' ) );
+
+		if ( !DiscordEmoji::isMention( $emoji ) ) {
+			$emoji = '';
+		}
+
 		$site = trim( (string)$this->config->get( 'Sitename' ) );
 
 		return '-# ' . ( $emoji === '' ? '' : $emoji . '  ' ) . DiscordMarkdown::escapeText( $site );

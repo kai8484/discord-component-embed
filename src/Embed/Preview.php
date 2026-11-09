@@ -51,7 +51,7 @@ final class Preview {
 			// The body is prose on a card: links in it are noise, so only their labels stay.
 			description: $this->descriptionMarkdown() === ''
 				? null
-				: \DiscordComponentEmbed\Content\DiscordMarkdown::toPlainText( $this->descriptionMarkdown() ),
+				: \DiscordComponentEmbed\Content\DiscordMarkdown::stripLinkTargets( $this->descriptionMarkdown() ),
 			image: $this->image,
 			gallery: $this->gallery,
 			footer: $this->footer === '' ? null : $this->footer,
