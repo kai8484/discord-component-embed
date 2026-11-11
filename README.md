@@ -55,8 +55,6 @@ divider — the wiki's mark and name.
 | `$wgDiscordComponentEmbedFooterEmoji` | `<:deadlock:1569028510943682900>` | Emoji before the site name; must be one `<:name:id>` mention. |
 | `$wgDiscordComponentEmbedFooterName` | `Deadlock Wiki` | Name in the footer; empty means `$wgSitename`. |
 
-<<<<<<< Updated upstream
-=======
 ## Licence
 
 Released into the public domain under [The Unlicense](COPYING).
