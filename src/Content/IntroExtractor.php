@@ -4,6 +4,8 @@ declare( strict_types=1 );
 
 namespace DiscordComponentEmbed\Content;
 
+use DiscordComponentEmbed\Config\Limits;
+
 use DOMDocument;
 use DOMElement;
 use DOMNode;
@@ -82,6 +84,14 @@ final class IntroExtractor {
 	private const PROSE_ITEM_ELEMENTS = [ 'li', 'dt', 'dd' ];
 
 	public function extract( string $html ): Intro {
+		// Both happen before the DOM: a JSON or code dump has no paragraphs to find, and
+		// a page far longer than the lead does not need its tail parsed at all.
+		$html = $this->capped( $html );
+
+		if ( !$this->hasProse( $html ) ) {
+			return new Intro( '', '' );
+		}
+
 		$document = $this->load( $html );
 		$paragraphs = $this->collectIntroParagraphs( $document );
 
@@ -102,6 +112,40 @@ final class IntroExtractor {
 		}
 
 		return new Intro( implode( ' ', $plain ), implode( ' ', $markdown ) );
+	}
+
+	/**
+	 * The first part of the page, cut on a tag boundary.
+	 *
+	 * The intro is at the top of the document, so a tail of patch notes or a table dump
+	 * only costs libxml time and memory. Truncating mid-tag would be tolerated by the
+	 * parser, but cutting between tags keeps the DOM honest.
+	 */
+	private function capped( string $html ): string {
+		if ( strlen( $html ) <= Limits::MAX_PARSED_HTML_BYTES ) {
+			return $html;
+		}
+
+		$head = substr( $html, 0, Limits::MAX_PARSED_HTML_BYTES );
+		$lastTag = strrpos( $head, '<' );
+
+		return $lastTag === false ? $head : substr( $head, 0, $lastTag );
+	}
+
+	/**
+	 * A cheap look for the elements the extractor collects, before paying for a DOM.
+	 *
+	 * Data and code pages render as one <pre> block, and nothing in this extension has
+	 * ever called a paragraph out of one.
+	 */
+	private function hasProse( string $html ): bool {
+		foreach ( [ '<p', '<li', '<dt', '<dd' ] as $tag ) {
+			if ( stripos( $html, $tag ) !== false ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	private function load( string $html ): DOMDocument {

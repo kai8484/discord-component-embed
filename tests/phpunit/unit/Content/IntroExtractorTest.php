@@ -204,6 +204,26 @@ final class IntroExtractorTest extends TestCase {
 		$this->assertSame( 'Two * three is not _six_, and x > y.', $this->extract( $html ) );
 	}
 
+	public function testAPageWithNoProseElementsIsNotParsedAtAll(): void {
+		// Data and code pages are one <pre> block. Building a DOM to find no paragraphs
+		// in it was the whole cost of such a page.
+		$html = '<div class="mw-parser-output"><pre>' . str_repeat( '{"a":1},', 20000 ) . '</pre></div>';
+
+		$this->assertSame( '', $this->extract( $html ) );
+		$this->assertSame( '', $this->extractMarkdown( $html ) );
+	}
+
+	public function testAnEnormousPageIsCappedRatherThanParsedWhole(): void {
+		// The lead is at the top; the megabytes of patch notes after it used to be parsed
+		// into the DOM for nothing.
+		$lead = '<p>Doorman is a game.</p><h2>Gameplay</h2>';
+		$tail = str_repeat( '<div class="patch"><p>' . str_repeat( 'word ', 400 ) . '</p></div>', 3000 );
+		$html = $lead . $tail;
+
+		$this->assertGreaterThan( 2 * 1024 * 1024, strlen( $html ), 'the cap is actually exercised' );
+		$this->assertSame( 'Doorman is a game.', $this->extract( $html ) );
+	}
+
 	public function testEntitiesAreDecoded(): void {
 		$this->assertSame( 'Doors & windows — 5 < 7.', $this->extract( '<p>Doors &amp; windows &mdash; 5 &lt; 7.</p>' ) );
 	}

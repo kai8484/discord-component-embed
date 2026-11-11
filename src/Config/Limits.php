@@ -31,6 +31,14 @@ final class Limits {
 	/** Discord refuses a message whose text display content is longer than this. */
 	public const MAX_TEXT_DISPLAY_CHARS = 4000;
 
+	/**
+	 * How much of a page is handed to the DOM parser. The lead is the first thing in
+	 * document order and the description budget is 200 characters, so half a megabyte
+	 * is orders of magnitude more than the intro can use; anything past it costs memory
+	 * and buys nothing.
+	 */
+	public const MAX_PARSED_HTML_BYTES = 512 * 1024;
+
 	/** Component type numbers, as published. */
 	public const TYPE_ACTION_ROW = 1;
 	public const TYPE_BUTTON = 2;
