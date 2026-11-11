@@ -123,7 +123,11 @@ final class PagePreviewFactory {
 			$emoji = '';
 		}
 
-		$site = trim( (string)$this->config->get( 'Sitename' ) );
+		$site = trim( (string)$this->config->get( 'DiscordComponentEmbedFooterName' ) );
+
+		if ( $site === '' ) {
+			$site = trim( (string)$this->config->get( 'Sitename' ) );
+		}
 
 		return '-# ' . ( $emoji === '' ? '' : $emoji . '  ' ) . DiscordMarkdown::escapeText( $site );
 	}

@@ -90,8 +90,12 @@
 			"description": "Whether to print the site name under a divider at the bottom of the card."
 		},
 		"DiscordComponentEmbedFooterEmoji": {
-			"value": "",
-			"description": "Emoji placed before the site name in the footer, if any."
+			"value": "<:deadlock:1569028510943682900>",
+			"description": "Emoji placed before the site name in the footer. Must be one <:name:id> mention; anything else is ignored."
+		},
+		"DiscordComponentEmbedFooterName": {
+			"value": "Deadlock Wiki",
+			"description": "Name shown in the footer. Empty means $wgSitename, which is often 'The ... Wiki'."
 		},
 		"DiscordComponentEmbedTitleHeading": {
 			"value": 2,
