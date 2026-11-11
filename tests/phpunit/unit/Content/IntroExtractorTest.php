@@ -54,6 +54,17 @@ final class IntroExtractorTest extends TestCase {
 		$this->assertSame( 'Real intro.', $this->extract( $html ) );
 	}
 
+	public function testProseAfterAHeadingInsideFurnitureIsNotLost(): void {
+		// The regression a "parse only up to the first heading" shortcut causes: this
+		// heading is in an infobox, so the lead continues after it.
+		$html = '<p>First paragraph.</p>'
+			. '<table class="infobox"><tr><td><h2>Stats</h2><p>Not prose</p></td></tr></table>'
+			. '<p>Second paragraph.</p><h2>Section</h2><p>Body.</p>';
+
+		$this->assertSame( 'First paragraph. Second paragraph.', $this->extract( $html ) );
+	}
+
+
 	public function testAnEmptyParagraphIsSkipped(): void {
 		$this->assertSame( 'Only text.', $this->extract( '<p></p><p>   </p><p>Only text.</p>' ) );
 	}
