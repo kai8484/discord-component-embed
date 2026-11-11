@@ -65,6 +65,18 @@ final class IntroExtractorTest extends TestCase {
 	}
 
 
+	public function testAHiddenSectionHeadingDoesNotEndTheLead(): void {
+		// The fast path cuts at the first mw-heading wrapper. If that wrapper sits inside
+		// furniture the lead continues past it, and the slice has to yield to a full parse.
+		$html = '<table class="infobox"><tr><td>'
+			. '<div class="mw-heading mw-heading2"><h2>Stats</h2></div>'
+			. '</td></tr></table>'
+			. '<p>The real lead.</p>'
+			. '<div class="mw-heading mw-heading2"><h2>Gameplay</h2></div><p>Body.</p>';
+
+		$this->assertSame( 'The real lead.', $this->extract( $html ) );
+	}
+
 	public function testAnEmptyParagraphIsSkipped(): void {
 		$this->assertSame( 'Only text.', $this->extract( '<p></p><p>   </p><p>Only text.</p>' ) );
 	}

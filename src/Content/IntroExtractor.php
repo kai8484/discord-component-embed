@@ -92,6 +92,44 @@ final class IntroExtractor {
 			return new Intro( '', '' );
 		}
 
+		// The lead ends at the first section heading, and MediaWiki wraps those in a
+		// mw-heading div. Parsing just the part above the wrapper is several times
+		// cheaper; where the lead continues past a heading inside furniture the slice
+		// yields nothing and the whole page is parsed after all.
+		$head = $this->beforeFirstSectionHeading( $html );
+
+		if ( $head !== $html ) {
+			$intro = $this->read( $head );
+
+			if ( !$intro->isEmpty() ) {
+				return $intro;
+			}
+		}
+
+		return $this->read( $html );
+	}
+
+	/**
+	 * The page up to its first section heading, or the page itself when it has none.
+	 *
+	 * Raw <h2> markup in a template is not wrapped, and the table of contents is
+	 * furniture, so neither ends the lead; both are why this looks for the wrapper
+	 * rather than for the heading tag.
+	 */
+	private function beforeFirstSectionHeading( string $html ): string {
+		$found = preg_match( '/<div\s+class="[^"]*mw-heading[^"]*"[^>]*>/i', $html, $match, PREG_OFFSET_CAPTURE );
+
+		return $found === 1 ? substr( $html, 0, $match[0][1] ) : $html;
+	}
+
+	/**
+	 * One parsing pass over the given HTML.
+	 */
+	private function read( string $html ): Intro {
+		if ( !$this->hasProse( $html ) ) {
+			return new Intro( '', '' );
+		}
+
 		$document = $this->load( $html );
 		$paragraphs = $this->collectIntroParagraphs( $document );
 
